@@ -1,0 +1,1770 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>沙盘查看 | 京东安防沙盘 & 产品矩阵沙盘</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #f1f5f9; color: #0f172a; }
+        
+        /* 主导航 */
+        .main-nav { background: linear-gradient(135deg, #1e3a8a, #2c3e66); padding: 0.8rem 1rem; display: flex; gap: 0.5rem; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .main-nav-title { color: white; font-size: 1.1rem; font-weight: 600; margin-right: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+        .view-only-badge { background: rgba(255,255,255,0.2); color: white; padding: 0.3rem 0.8rem; border-radius: 2rem; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 6px; }
+        .nav-tabs { display: flex; gap: 0.5rem; }
+        .nav-tab { background: rgba(255,255,255,0.1); color: white; border: none; padding: 0.4rem 1rem; border-radius: 2rem; cursor: pointer; font-size: 0.8rem; font-weight: 500; transition: 0.2s; display: inline-flex; align-items: center; gap: 6px; }
+        .nav-tab:hover { background: rgba(255,255,255,0.2); }
+        .nav-tab.active { background: white; color: #1e3a8a; }
+        .back-btn { background: rgba(255,255,255,0.1); color: white; border: none; padding: 0.4rem 1rem; border-radius: 2rem; cursor: pointer; font-size: 0.8rem; font-weight: 500; transition: 0.2s; display: inline-flex; align-items: center; gap: 6px; margin-left: auto; text-decoration: none; }
+        .back-btn:hover { background: rgba(255,255,255,0.2); }
+        
+        /* 页面容器 */
+        .page-container { display: none; padding: 1rem; }
+        .page-container.active { display: block; }
+        
+        /* 加载状态 */
+        .loading-state { text-align: center; padding: 4rem 2rem; }
+        .loading-state i { font-size: 3rem; color: #2563eb; margin-bottom: 1rem; }
+        .loading-state h2 { font-size: 1.5rem; color: #1e3a8a; margin-bottom: 0.5rem; }
+        .loading-state p { color: #64748b; font-size: 0.9rem; }
+        
+        /* 错误状态 */
+        .error-state { text-align: center; padding: 4rem 2rem; background: white; border-radius: 1rem; max-width: 600px; margin: 2rem auto; }
+        .error-state i { font-size: 3rem; color: #ef4444; margin-bottom: 1rem; }
+        .error-state h2 { font-size: 1.5rem; color: #991b1b; margin-bottom: 0.5rem; }
+        .error-state p { color: #64748b; font-size: 0.9rem; margin-bottom: 1.5rem; }
+        .error-state .back-link { background: #2563eb; color: white; padding: 0.6rem 1.5rem; border-radius: 2rem; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; font-size: 0.9rem; }
+        
+        /* ========== 页面1: 京东安防沙盘样式 ========== */
+        #page1 .dashboard { max-width: 1800px; margin: 0 auto; }
+        #page1 .header { margin-bottom: 1.2rem; display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem; }
+        #page1 .title-area h1 { font-size: 1.5rem; font-weight: 700; background: linear-gradient(135deg, #1e3a8a, #2c3e66); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        #page1 .sub { color: #475569; margin-top: 0.2rem; font-size: 0.8rem; }
+        #page1 .view-info { background: white; border-radius: 2rem; padding: 0.4rem 1rem; box-shadow: 0 2px 6px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+        #page1 .view-info-item { font-size: 0.8rem; color: #4b5563; display: inline-flex; align-items: center; gap: 6px; }
+        #page1 .view-info-item i { color: #2563eb; }
+        #page1 .status { font-size: 0.7rem; padding: 0.2rem 0.8rem; border-radius: 2rem; display: inline-flex; align-items: center; gap: 4px; }
+        #page1 .status-success { background: #d1fae5; color: #065f46; }
+
+        #page1 .filter-area { display: flex; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; background: white; border-radius: 1rem; padding: 0.6rem 1rem; box-shadow: 0 2px 6px rgba(0,0,0,0.05); align-items: center; }
+        #page1 .month-selector-area { display: flex; align-items: center; gap: 0.8rem; background: white; border-radius: 2rem; padding: 0.4rem 0.8rem; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
+        #page1 .month-selector-area select { padding: 0.4rem; border: 1px solid #e2e8f0; border-radius: 0.5rem; font-size: 0.85rem; }
+        #page1 .brand-filter { display: flex; align-items: center; position: relative; }
+        #page1 .brand-filter-btn { background: #10b981; color: white; border: none; padding: 0.4rem 1rem; border-radius: 2rem; cursor: pointer; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 6px; font-weight: 500; transition: 0.2s; }
+        #page1 .brand-filter-btn:hover { background: #059669; }
+        #page1 .brand-panel { display: none; position: absolute; top: 100%; left: 0; margin-top: 0.8rem; border: 1px solid #e2e8f0; border-radius: 1rem; padding: 0.8rem; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 1000; min-width: 200px; }
+        #page1 .brand-panel.show { display: block; }
+        #page1 .brand-search { width: 100%; padding: 0.4rem; border: 1px solid #e2e8f0; border-radius: 2rem; font-size: 0.8rem; margin-bottom: 0.5rem; }
+        #page1 .brand-checkbox-list { max-height: 200px; overflow-y: auto; margin-bottom: 0.5rem; }
+        #page1 .brand-checkbox-list label { display: block; font-size: 0.75rem; margin-bottom: 0.3rem; cursor: pointer; }
+        #page1 .brand-checkbox-list input { margin-right: 0.5rem; }
+        #page1 .brand-actions { display: flex; gap: 0.5rem; }
+        #page1 .brand-actions button { background: #eef2ff; border: none; padding: 0.2rem 0.8rem; border-radius: 1rem; font-size: 0.7rem; cursor: pointer; }
+
+        #page1 .imou-badge { text-align: right; margin-bottom: 0.5rem; }
+        #page1 .imou-badge img { height: 80px; width: auto; filter: drop-shadow(0 3px 6px rgba(249, 115, 22, 0.4)); transition: transform 0.3s ease; }
+        #page1 .imou-badge img:hover { transform: scale(1.08); }
+
+        #page1 .tab-bar { display: flex; gap: 0.4rem; margin: 1.2rem 0 0.5rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.4rem; flex-wrap: wrap; }
+        #page1 .tab-btn { background: transparent; border: none; padding: 0.4rem 1.2rem; font-weight: 600; font-size: 0.85rem; border-radius: 40px; cursor: pointer; transition: all 0.2s; color: #4b5563; white-space: nowrap; }
+        #page1 .tab-btn i { margin-right: 6px; }
+        #page1 .tab-btn.active { background: #2563eb; color: white; box-shadow: 0 4px 10px rgba(37,99,235,0.2); }
+        #page1 .tab-btn:not(.active):hover { background: #e2e8f0; }
+        #page1 .matrix-legend { background: #ffffffcc; backdrop-filter: blur(4px); border-radius: 1.5rem; padding: 0.4rem 1rem; margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 0.8rem; font-size: 0.7rem; border: 1px solid #e2e8f0; justify-content: space-between; align-items: center; }
+        #page1 .legend-axis { display: flex; gap: 0.8rem; flex-wrap: wrap; }
+        #page1 .axis-x { border-left: 3px solid #3b82f6; padding-left: 0.5rem; }
+        #page1 .note { font-size: 0.65rem; color: #5b6e8c; background: #fef9e3; border-radius: 20px; padding: 0.2rem 0.6rem; }
+        
+        /* 卡片大小控制按钮 */
+        #page1 .size-btn { background: #f1f5f9; border: 1px solid #e2e8f0; padding: 0.2rem 0.6rem; border-radius: 1rem; font-size: 0.65rem; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 4px; }
+        #page1 .size-btn:hover { background: #e2e8f0; }
+        #page1 .size-btn.active { background: #2563eb; color: white; border-color: #2563eb; }
+        
+        /* 紧凑模式 - 最小化卡片 */
+        #page1 .matrix-container.compact-mode .data-cell .cell-products { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); grid-auto-rows: 60px; gap: 2px; }
+        #page1 .matrix-container.compact-mode .product-card-mini { height: 100%; width: 100%; min-height: 60px; padding: 0.1rem; margin-bottom: 0; gap: 2px; }
+        #page1 .matrix-container.compact-mode .mini-img { width: 20px; height: 20px; }
+        #page1 .matrix-container.compact-mode .mini-img img { max-height: 20px; }
+        #page1 .matrix-container.compact-mode .mini-title { font-size: 0.5rem; }
+        #page1 .matrix-container.compact-mode .sales-item { font-size: 0.45rem; }
+        #page1 .matrix-container.compact-mode .brand-badge-img { font-size: 0.4rem; }
+        #page1 .matrix-container.compact-mode .price-badge,
+        #page1 .matrix-container.compact-mode .resolution-badge,
+        #page1 .matrix-container.compact-mode .trend-badge { font-size: 0.4rem; padding: 0.02rem 0.1rem; }
+        #page1 .matrix-container.compact-mode .link-btn { font-size: 0.4rem; padding: 0.05rem 0.15rem; }
+        #page1 .matrix-container.compact-mode .sales-row { flex-direction: row; gap: 0.3rem; }
+        
+        /* 详细模式 - 完整信息 */
+        #page1 .matrix-container.detail-mode .product-card-mini { padding: 0.4rem; margin-bottom: 0.3rem; gap: 6px; }
+        #page1 .matrix-container.detail-mode .mini-img { width: 36px; height: 36px; }
+        #page1 .matrix-container.detail-mode .mini-img img { max-height: 36px; }
+        #page1 .matrix-container.detail-mode .mini-title { font-size: 0.7rem; }
+        #page1 .matrix-container.detail-mode .sales-item { font-size: 0.6rem; }
+        #page1 .matrix-container.detail-mode .brand-badge-img { font-size: 0.55rem; }
+        #page1 .matrix-container { background: white; border-radius: 1.2rem; padding: 0.4rem; box-shadow: 0 4px 12px rgba(0,0,0,0.02); border: 1px solid #eef2f6; overflow-x: auto; min-height: 350px; }
+        #page1 .matrix-grid { display: grid; grid-template-columns: 80px repeat(6, 1fr); border-radius: 0.8rem; background: #ffffff; width: 100%; }
+        #page1 .price-label { background: #f8fafc; font-weight: 600; padding: 0.8rem 0.3rem; text-align: center; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; font-size: 0.7rem; color: #c2410c; }
+        #page1 .data-cell { background: #ffffff; border-bottom: 1px solid #ecf3f9; border-right: 1px solid #ecf3f9; padding: 4px 3px; vertical-align: top; min-height: 60px; }
+        #page1 .bottom-axis { background: #f1f5f9; text-align: center; padding: 0.6rem 0.2rem; font-weight: 600; font-size: 0.7rem; border-top: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; color: #1e40af; }
+        #page1 .corner-bottom { background: #f8fafc; border-top: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; text-align: center; padding: 0.6rem 0.2rem; font-weight: 600; font-size: 0.7rem; color: #475569; }
+        #page1 .product-card-mini { display: flex; gap: 3px; background: #fefefe; border-radius: 0.4rem; padding: 0.2rem; margin-bottom: 0.2rem; border: 1px solid #eef2f8; transition: 0.1s; align-items: flex-start; }
+        #page1 .product-card-mini:hover { border-color: #cbdff2; background: #fafcff; transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        #page1 .mini-img-wrap { display: flex; flex-direction: column; align-items: center; gap: 1px; flex-shrink: 0; }
+        #page1 .mini-img { width: 28px; height: 28px; background: linear-gradient(135deg, #f1f5f9, #e2e8f0); border-radius: 0.35rem; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px solid #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        #page1 .brand-badge-img { font-size: 0.45rem; font-weight: 500; color: #475569; background: #eef2ff; padding: 0.01rem 0.15rem; border-radius: 20px; white-space: nowrap; }
+        #page1 .mini-img img { max-width: 100%; max-height: 28px; object-fit: contain; }
+        #page1 .mini-info { flex: 1; min-width: 0; }
+        #page1 .mini-title { font-weight: 700; font-size: 0.6rem; line-height: 1.1; margin-bottom: 0.05rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        #page1 .sales-row { display: flex; flex-direction: column; gap: 0.02rem; margin-top: 0.05rem; }
+        #page1 .sales-item { font-size: 0.55rem; display: inline-flex; align-items: center; gap: 2px; width: fit-content; font-weight: 700; }
+        #page1 .sales-item.current { color: #ea580c; }
+        #page1 .sales-item.prev { color: #4f46e5; }
+        #page1 .trend-badge { font-size: 0.5rem; font-weight: 600; padding: 0.03rem 0.2rem; border-radius: 20px; display: inline-flex; align-items: center; gap: 2px; background: #f1f5f9; margin-left: 0.15rem; }
+        #page1 .trend-up { color: #10b981; background: #e3f7ef; }
+        #page1 .trend-down { color: #ef4444; background: #feeceb; }
+        #page1 .link-btn { font-size: 0.5rem; font-weight: 600; padding: 0.1rem 0.3rem; border-radius: 20px; background: #2563eb; color: white; text-decoration: none; display: inline-flex; align-items: center; gap: 3px; margin-left: 0.15rem; transition: 0.2s; }
+        #page1 .link-btn:hover { background: #1d4ed8; }
+        #page1 .price-badge, #page1 .resolution-badge { font-size: 0.5rem; font-weight: 600; color: #0f2e5c; background: #f1f5f9; padding: 0.03rem 0.2rem; border-radius: 20px; display: inline-block; margin-top: 0.05rem; }
+        #page1 .resolution-badge { background: #e6f0ff; color: #0369a1; margin-left: 0.15rem; }
+        #page1 .empty-cell { color: #94a3b8; font-size: 0.6rem; text-align: center; padding: 0.5rem 0; }
+        #page1 .loading-placeholder { text-align: center; padding: 2rem; color: #2563eb; background: #f8fafc; border-radius: 1rem; font-size: 0.85rem; }
+        #page1 footer { text-align: center; font-size: 0.65rem; margin-top: 1.5rem; color: #6c86a3; }
+        
+        /* ========== 页面2: 产品矩阵沙盘样式 ========== */
+        #page2 .dashboard { max-width: 1800px; margin: 0 auto; }
+        #page2 .header { margin-bottom: 1.2rem; display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem; }
+        #page2 .title-area h1 { font-size: 1.5rem; font-weight: 700; background: linear-gradient(135deg, #1e3a8a, #2c3e66); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        #page2 .title-area h1 i { margin-right: 0.5rem; color: #2563eb; }
+        #page2 .sub { color: #475569; margin-top: 0.2rem; font-size: 0.8rem; }
+        #page2 .view-info { background: white; border-radius: 2rem; padding: 0.4rem 1rem; box-shadow: 0 2px 6px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+        #page2 .view-info-item { font-size: 0.8rem; color: #4b5563; display: inline-flex; align-items: center; gap: 6px; }
+        #page2 .view-info-item i { color: #2563eb; }
+        #page2 .status { font-size: 0.7rem; padding: 0.2rem 0.8rem; border-radius: 2rem; display: inline-flex; align-items: center; gap: 4px; }
+        #page2 .status-success { background: #d1fae5; color: #065f46; }
+        #page2 .region-tabs { display: flex; gap: 0.4rem; margin: 1.2rem 0 0.5rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.4rem; flex-wrap: wrap; }
+        #page2 .region-tab { background: transparent; border: none; padding: 0.4rem 1.2rem; font-weight: 600; font-size: 0.85rem; border-radius: 40px; cursor: pointer; transition: all 0.2s; color: #4b5563; white-space: nowrap; }
+        #page2 .region-tab i { margin-right: 6px; }
+        #page2 .region-tab.active { background: #2563eb; color: white; box-shadow: 0 4px 10px rgba(37,99,235,0.2); }
+        #page2 .region-tab:not(.active):hover { background: #e2e8f0; }
+        #page2 .matrix-legend { background: #ffffffcc; backdrop-filter: blur(4px); border-radius: 1.5rem; padding: 0.4rem 1rem; margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 0.8rem; font-size: 0.7rem; border: 1px solid #e2e8f0; justify-content: space-between; align-items: center; }
+        #page2 .legend-axis { display: flex; gap: 0.8rem; flex-wrap: wrap; }
+        #page2 .axis-x { border-left: 3px solid #3b82f6; padding-left: 0.5rem; }
+        #page2 .axis-y { border-left: 3px solid #10b981; padding-left: 0.5rem; }
+        #page2 .note { font-size: 0.65rem; color: #5b6e8c; background: #fef9e3; border-radius: 20px; padding: 0.2rem 0.6rem; }
+        #page2 .matrix-container { background: white; border-radius: 1.2rem; padding: 0.4rem; box-shadow: 0 4px 12px rgba(0,0,0,0.02); border: 1px solid #eef2f6; overflow-x: auto; min-height: 350px; }
+        #page2 .matrix-grid { display: grid; grid-template-columns: 100px repeat(6, 1fr); border-radius: 0.8rem; background: #ffffff; width: 100%; }
+        #page2 .price-label { background: #f8fafc; font-weight: 600; padding: 0.8rem 0.3rem; text-align: center; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; font-size: 0.7rem; color: #c2410c; display: flex; align-items: center; justify-content: center; }
+        #page2 .data-cell { background: #ffffff; border-bottom: 1px solid #ecf3f9; border-right: 1px solid #ecf3f9; padding: 6px 4px; vertical-align: top; min-height: 80px; }
+        #page2 .bottom-axis { background: #f1f5f9; text-align: center; padding: 0.6rem 0.2rem; font-weight: 600; font-size: 0.7rem; border-top: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; color: #1e40af; }
+        #page2 .corner-bottom { background: #f8fafc; border-top: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; text-align: center; padding: 0.6rem 0.2rem; font-weight: 600; font-size: 0.7rem; color: #475569; }
+        #page2 .product-card-mini { display: flex; gap: 6px; background: #fefefe; border-radius: 0.5rem; padding: 0.4rem; margin-bottom: 0.3rem; border: 1px solid #eef2f8; transition: 0.15s; align-items: flex-start; }
+        #page2 .product-card-mini:hover { border-color: #cbdff2; background: #fafcff; transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        #page2 .mini-img-wrap { display: flex; flex-direction: column; align-items: center; gap: 2px; flex-shrink: 0; }
+        #page2 .mini-img { width: 40px; height: 40px; background: linear-gradient(135deg, #f1f5f9, #e2e8f0); border-radius: 0.35rem; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px solid #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        #page2 .mini-img img { max-width: 100%; max-height: 40px; object-fit: contain; }
+        #page2 .brand-badge-img { font-size: 0.5rem; font-weight: 600; color: #475569; background: #eef2ff; padding: 0.05rem 0.2rem; border-radius: 20px; white-space: nowrap; max-width: 50px; overflow: hidden; text-overflow: ellipsis; }
+        #page2 .mini-info { flex: 1; min-width: 0; }
+        #page2 .mini-title { font-weight: 700; font-size: 0.65rem; line-height: 1.2; margin-bottom: 0.1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #1e293b; }
+        #page2 .mini-model { font-size: 0.6rem; color: #64748b; margin-bottom: 0.1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        #page2 .sales-row { display: flex; flex-direction: column; gap: 1px; margin: 0.1rem 0; }
+        #page2 .sales-item { font-size: 0.6rem; display: inline-flex; align-items: center; gap: 3px; width: fit-content; font-weight: 600; color: #ea580c; }
+        #page2 .sales-item i { font-size: 0.5rem; }
+        #page2 .badge-row { display: flex; flex-wrap: wrap; gap: 2px; margin-top: 0.1rem; }
+        #page2 .price-badge, #page2 .resolution-badge, #page2 .feature-badge, #page2 .shelf-badge { font-size: 0.5rem; font-weight: 600; padding: 0.05rem 0.25rem; border-radius: 20px; display: inline-flex; align-items: center; gap: 2px; }
+        #page2 .price-badge { background: #fef3c7; color: #92400e; }
+        #page2 .resolution-badge { background: #dbeafe; color: #1e40af; }
+        #page2 .shelf-badge { background: #fce7f3; color: #be185d; }
+        #page2 .feature-badge { background: #d1fae5; color: #065f46; }
+        #page2 .link-btn { font-size: 0.5rem; font-weight: 600; padding: 0.1rem 0.3rem; border-radius: 20px; background: #2563eb; color: white; text-decoration: none; display: inline-flex; align-items: center; gap: 3px; transition: 0.2s; margin-top: 0.1rem; }
+        #page2 .link-btn:hover { background: #1d4ed8; }
+        #page2 .empty-cell { color: #94a3b8; font-size: 0.6rem; text-align: center; padding: 0.5rem 0; }
+        #page2 .imou-badge { text-align: right; margin-bottom: 0.5rem; }
+        #page2 .imou-badge img { height: 80px; width: auto; filter: drop-shadow(0 3px 6px rgba(249, 115, 22, 0.4)); transition: transform 0.3s ease; }
+        #page2 .imou-badge img:hover { transform: scale(1.08); }
+        #page2 .features-row { display: flex; flex-wrap: wrap; gap: 2px; margin-top: 0.15rem; padding-top: 0.1rem; border-top: 1px dashed #e2e8f0; }
+        #page2 .loading-placeholder { text-align: center; padding: 2rem; color: #2563eb; background: #f8fafc; border-radius: 1rem; font-size: 0.85rem; }
+        #page2 footer { text-align: center; font-size: 0.65rem; margin-top: 1.5rem; color: #6c86a3; }
+        
+        @media (max-width: 1200px) { 
+            body { padding: 0; } 
+            #page1 .matrix-grid { grid-template-columns: 80px repeat(6, 1fr); }
+            #page2 .matrix-grid { grid-template-columns: 80px repeat(6, 1fr); }
+        }
+        @media (max-width: 768px) { 
+            #page2 .matrix-grid { grid-template-columns: 60px repeat(6, 1fr); } 
+            #page2 .mini-img { width: 32px; height: 32px; } 
+        }
+        @media print {
+            .main-nav { display: none !important; }
+            body { padding: 0; }
+        }
+    </style>
+</head>
+<body>
+    <!-- 主导航 -->
+    <nav class="main-nav">
+        <div class="main-nav-title"><i class="fas fa-layer-group"></i> 沙盘查看</div>
+        <span class="view-only-badge"><i class="fas fa-eye"></i> 只读模式</span>
+        <div class="nav-tabs">
+            <button id="navPage1Btn" class="nav-tab active"><i class="fas fa-chalkboard-user"></i> 京东竞品沙盘</button>
+            <button id="navPage2Btn" class="nav-tab"><i class="fas fa-th"></i> 电商新品跟踪</button>
+        </div>
+        <a href="沙盘仪表盘-带分享.html" class="back-btn"><i class="fas fa-arrow-left"></i> 返回编辑</a>
+    </nav>
+
+    <!-- 加载中状态 -->
+    <div id="loadingState" class="loading-state">
+        <i class="fas fa-spinner fa-pulse"></i>
+        <h2>正在加载沙盘数据...</h2>
+        <p>请稍候，正在从本地存储恢复数据</p>
+    </div>
+
+    <!-- 错误状态 -->
+    <div id="errorState" class="error-state" style="display: none;">
+        <i class="fas fa-exclamation-circle"></i>
+        <h2>无法加载沙盘数据</h2>
+        <p id="errorMessage">数据已过期或不存在，请返回主页面重新上传</p>
+        
+        <!-- JSON 文件导入 -->
+        <div style="margin: 1.5rem 0; padding: 1rem; background: #f8fafc; border-radius: 0.5rem;">
+            <h4 style="font-size: 0.9rem; color: #1e3a8a; margin-bottom: 0.75rem;"><i class="fas fa-file-import"></i> 或者导入 JSON 文件</h4>
+            <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 0.75rem;">如果您有导出的 JSON 文件，可以直接导入查看：</p>
+            <label for="jsonFileInput" class="template-btn" style="display: inline-flex; cursor: pointer;">
+                <i class="fas fa-upload"></i> 选择 JSON 文件
+            </label>
+            <input type="file" id="jsonFileInput" accept=".json" style="display: none;">
+            <div id="importStatus" style="margin-top: 0.75rem; font-size: 0.8rem; color: #10b981; display: none;">
+                <i class="fas fa-spinner fa-spin"></i> 正在导入数据，请稍候...
+            </div>
+        </div>
+        
+        <a href="沙盘仪表盘-带分享.html" class="back-link"><i class="fas fa-arrow-left"></i> 返回主页面</a>
+    </div>
+
+    <!-- 页面1: 京东安防沙盘 -->
+    <div id="page1" class="page-container" style="display: none;">
+        <div class="dashboard" id="dashboard1">
+            <div class="header">
+                <div class="title-area">
+                    <h1><i class="fas fa-chalkboard-user"></i> 京东竞品沙盘</h1>
+                    <div class="sub">查看模式 - 数据来自分享链接</div>
+                </div>
+                <div class="view-info">
+                    <span class="view-info-item"><i class="fas fa-calendar"></i> <span id="viewMonth">--</span></span>
+                    <span class="view-info-item"><i class="fas fa-filter"></i> <span id="viewBrands">--</span>个品牌</span>
+                    <span class="view-info-item"><i class="fas fa-cube"></i> <span id="viewProducts">--</span>个产品</span>
+                    <span id="viewStatus" class="status status-success"><i class="fas fa-check-circle"></i> 已加载</span>
+                </div>
+            </div>
+
+            <div class="filter-area">
+                <div class="month-selector-area">
+                    <i class="fas fa-calendar-alt"></i>
+                    <select id="monthSelector">
+                        <option value="">-- 选择月份 --</option>
+                    </select>
+                </div>
+                <div class="brand-filter">
+                    <button id="brandFilterBtn" class="brand-filter-btn"><i class="fas fa-filter"></i> 选择品牌</button>
+                    <div id="brandPanel" class="brand-panel">
+                        <input type="text" id="brandSearchInput" class="brand-search" placeholder="搜索品牌...">
+                        <div id="brandCheckboxList" class="brand-checkbox-list"></div>
+                        <div class="brand-actions">
+                            <button id="selectAllBrands">全选</button>
+                            <button id="clearAllBrands">清空</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-bar">
+                <button id="tabIndoorBtn" class="tab-btn active"><i class="fas fa-home"></i> 室内云台/卡片机</button>
+                <button id="tabOutdoorBtn" class="tab-btn"><i class="fas fa-tree"></i> 室外产品</button>
+                <button id="tabDualBtn" class="tab-btn"><i class="fas fa-camera-retro"></i> 双目/多目摄像机</button>
+                <button id="tabBatteryBtn" class="tab-btn"><i class="fas fa-battery-full"></i> 电池摄像机</button>
+                <button id="tabDoorbellBtn" class="tab-btn"><i class="fas fa-bell"></i> 智能门铃</button>
+                <button id="tabPeepholeBtn" class="tab-btn"><i class="fas fa-eye"></i> 智能猫眼</button>
+            </div>
+
+            <div class="imou-badge"><img src="imou-website/logo.png" alt="IMOU" onerror="this.style.display='none'"></div>
+
+            <div class="matrix-legend">
+                <div class="legend-axis"><i class="fas fa-arrow-up"></i> <span class="axis-y">价格区间 (由上至下递减)</span> : &nbsp; &nbsp; &gt;¥350 &nbsp;|&nbsp; ¥250~350 &nbsp;|&nbsp; ¥150~250 &nbsp;|&nbsp; &lt;¥150</div>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span style="font-weight: 600; color: #475569; font-size: 0.7rem;">卡片大小:</span>
+                    <button class="size-btn" data-size="compact" onclick="switchCardSize('compact')"><i class="fas fa-compress"></i> 紧凑</button>
+                    <button class="size-btn active" data-size="normal" onclick="switchCardSize('normal')"><i class="fas fa-expand"></i> 正常</button>
+                    <button class="size-btn" data-size="detail" onclick="switchCardSize('detail')"><i class="fas fa-list"></i> 详细</button>
+                </div>
+                <div class="note"><i class="fas fa-chart-line"></i> 销量数据为同型号SKU在选定月份及其上月的实际聚合结果 | 环比基于真实数据计算</div>
+            </div>
+
+            <div id="matrixWrapper" class="matrix-container">
+                <div class="loading-placeholder"><i class="fas fa-spinner fa-pulse"></i> 加载中...</div>
+            </div>
+            
+            <footer style="text-align: center; margin-top: 1rem; color: #6c86a3; font-size: 0.65rem;">
+                数据来自分享链接 | 如需编辑请返回主页面
+            </footer>
+        </div>
+    </div>
+
+    <!-- 页面2: 产品矩阵沙盘 -->
+    <div id="page2" class="page-container" style="display: none;">
+        <div class="dashboard" id="dashboard2">
+            <div class="header">
+                <div class="title-area">
+                    <h1><i class="fas fa-th"></i> 电商新品跟踪</h1>
+                    <div class="sub">查看模式 - 数据来自分享链接</div>
+                </div>
+                <div class="view-info">
+                    <span class="view-info-item"><i class="fas fa-globe"></i> <span id="viewRegion">--</span></span>
+                    <span class="view-info-item"><i class="fas fa-cube"></i> <span id="viewProducts2">--</span>个产品</span>
+                    <span id="viewStatus2" class="status status-success"><i class="fas fa-check-circle"></i> 已加载</span>
+                </div>
+            </div>
+
+            <!-- 上架月份筛选 -->
+            <div class="filter-area" style="margin-bottom: 1rem; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fas fa-calendar-alt" style="color: #3b82f6;"></i>
+                    <span style="font-weight: 600; color: #475569; font-size: 0.85rem;">上架月份:</span>
+                    <select id="monthSelector2" style="padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 0.5rem; font-size: 0.85rem; background: white;">
+                        <option value="all">全部</option>
+                    </select>
+                    <button id="applyMonthBtn2" class="refresh-btn" style="padding: 0.4rem 1rem; font-size: 0.8rem; background: #2563eb; color: white; border: none; border-radius: 0.5rem; cursor: pointer;"><i class="fas fa-filter"></i> 筛选</button>
+                </div>
+                <span id="newProductBadge" class="badge" style="background: #dbeafe; color: #1e40af; padding: 0.3rem 0.8rem; border-radius: 1rem; font-size: 0.75rem; display: none;">
+                    <i class="fas fa-star"></i> 显示最近一个月新品
+                </span>
+            </div>
+
+            <div id="regionTabs" class="region-tabs"></div>
+
+            <div class="imou-badge"><img src="imou-website/logo.png" alt="IMOU" onerror="this.style.display='none'"></div>
+
+            <div class="matrix-legend">
+                <div class="legend-axis">
+                    <span class="axis-y"><i class="fas fa-arrow-up"></i> 价格区间 (由上至下递减)</span>
+                    <span class="axis-x"><i class="fas fa-arrow-right"></i> 销量区间 (由左至右递减)</span>
+                </div>
+                <div class="note"><i class="fas fa-magic"></i> 产品功能基于型号、类别、分辨率智能识别</div>
+            </div>
+
+            <div id="matrixWrapper2" class="matrix-container">
+                <div class="loading-placeholder"><i class="fas fa-spinner fa-pulse"></i> 加载中...</div>
+            </div>
+            
+            <footer style="text-align: center; margin-top: 1rem; color: #6c86a3; font-size: 0.65rem;">
+                数据来自分享链接 | 如需编辑请返回主页面
+            </footer>
+        </div>
+    </div>
+
+<script>
+// ==================== URL状态管理工具 ====================
+const URLStateManager = {
+    parseState() {
+        const params = new URLSearchParams(window.location.search);
+        const brandsStr = params.get('brands');
+        return {
+            page: params.get('page') || 'page1',
+            month: params.get('month') || '',
+            tab: params.get('tab') || 'indoor',
+            region: params.get('region') || '',
+            brands: brandsStr ? brandsStr.split(',') : [],
+            // 兼容旧版和新版数据ID
+            dataId: params.get('dataId') || '',
+            dataId1: params.get('dataId1') || '',
+            dataId2: params.get('dataId2') || ''
+        };
+    }
+};
+
+// ==================== 数据存储管理器 ====================
+const DataStorage = {
+    // 从localStorage加载数据（自动解压）
+    loadData(key) {
+        try {
+            const storageValue = localStorage.getItem('sandbox_' + key);
+            if (!storageValue) return null;
+
+            // 检查是否是压缩数据
+            if (storageValue.startsWith('COMPRESSED:')) {
+                if (typeof LZString !== 'undefined') {
+                    const compressed = storageValue.substring(11); // 去掉 'COMPRESSED:' 前缀
+                    const decompressed = LZString.decompressFromUTF16(compressed);
+                    return JSON.parse(decompressed);
+                } else {
+                    console.error('数据是压缩格式但 LZString 库未加载');
+                    return null;
+                }
+            }
+
+            // 普通JSON数据
+            return JSON.parse(storageValue);
+        } catch (e) {
+            console.error('加载数据失败:', e);
+            return null;
+        }
+    },
+
+    // 保存数据到localStorage（带压缩）
+    saveData(key, data) {
+        try {
+            const serialized = JSON.stringify(data);
+            // 尝试压缩数据
+            let storageValue;
+            let isCompressed = false;
+
+            if (typeof LZString !== 'undefined') {
+                const compressed = LZString.compressToUTF16(serialized);
+                // 只有当压缩后更小时才使用压缩
+                if (compressed.length < serialized.length * 0.9) {
+                    storageValue = 'COMPRESSED:' + compressed;
+                    isCompressed = true;
+                    console.log('数据已压缩:', key, '原始大小:', serialized.length, '压缩后:', compressed.length, '压缩率:', (compressed.length / serialized.length * 100).toFixed(1) + '%');
+                } else {
+                    storageValue = serialized;
+                    console.log('数据未压缩（压缩效果不佳）:', key, '大小:', serialized.length);
+                }
+            } else {
+                storageValue = serialized;
+            }
+
+            localStorage.setItem('sandbox_' + key, storageValue);
+            return { success: true, isCompressed, originalSize: serialized.length };
+        } catch (e) {
+            console.error('保存数据失败:', e);
+            // 如果是存储空间不足，尝试清理旧数据后重试
+            if (e.name === 'QuotaExceededError' || e.message.includes('quota')) {
+                console.log('存储空间不足，尝试清理旧数据...');
+                this.cleanup();
+                try {
+                    const serialized = JSON.stringify(data);
+                    localStorage.setItem('sandbox_' + key, serialized);
+                    return { success: true, isCompressed: false, originalSize: serialized.length };
+                } catch (e2) {
+                    console.error('清理后仍然保存失败:', e2);
+                    return { success: false, error: '存储空间不足，即使清理后也无法保存。数据可能太大。' };
+                }
+            }
+            return { success: false, error: e.message };
+        }
+    },
+
+    // 清除过期数据（保留最近30天的）
+    cleanup() {
+        const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+        let cleanedCount = 0;
+        for (let i = localStorage.length - 1; i >= 0; i--) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith('sandbox_')) {
+                try {
+                    const storageValue = localStorage.getItem(key);
+                    let data;
+                    // 检查是否是压缩数据
+                    if (storageValue.startsWith('COMPRESSED:')) {
+                        if (typeof LZString !== 'undefined') {
+                            const compressed = storageValue.substring(11);
+                            const decompressed = LZString.decompressFromUTF16(compressed);
+                            data = JSON.parse(decompressed);
+                        }
+                    } else {
+                        data = JSON.parse(storageValue);
+                    }
+
+                    if (data && data.timestamp && data.timestamp < thirtyDaysAgo) {
+                        localStorage.removeItem(key);
+                        cleanedCount++;
+                    }
+                } catch (e) {
+                    // 如果解析失败，删除这个key
+                    localStorage.removeItem(key);
+                    cleanedCount++;
+                }
+            }
+        }
+        console.log('清理完成，删除了', cleanedCount, '个旧数据项');
+        return cleanedCount;
+    },
+
+    // 获取存储统计信息
+    getStorageStats() {
+        let totalSize = 0;
+        let itemCount = 0;
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith('sandbox_')) {
+                const value = localStorage.getItem(key);
+                totalSize += key.length + value.length;
+                itemCount++;
+            }
+        }
+        return {
+            itemCount,
+            totalSize,
+            totalSizeMB: (totalSize / 1024 / 1024).toFixed(2) + ' MB'
+        };
+    }
+};
+
+// ==================== 页面1: 京东安防沙盘功能 ====================
+(function() {
+    function parseDateToYearMonth(dateStr) {
+        if (!dateStr) return null;
+        const str = String(dateStr).trim();
+        let match = str.match(/^(\d{4})-(\d{1,2})-\d{1,2}$/);
+        if (match) {
+            return { year: parseInt(match[1]), month: parseInt(match[2]) };
+        }
+        match = str.match(/^(\d{2})\.(\d{1,2})(?:月)?$/);
+        if (match) {
+            let year = 2000 + parseInt(match[1]);
+            let month = parseInt(match[2]);
+            if (month >= 1 && month <= 12) return { year, month };
+        }
+        match = str.match(/^(\d{4})年(\d{1,2})月$/);
+        if (match) {
+            return { year: parseInt(match[1]), month: parseInt(match[2]) };
+        }
+        match = str.match(/^(\d{1,2})\/(\d{2,4})$/);
+        if (match) {
+            let month = parseInt(match[1]);
+            let year = parseInt(match[2]);
+            if (year < 100) year += 2000;
+            if (month >= 1 && month <= 12) return { year, month };
+        }
+        const d = new Date(str);
+        if (!isNaN(d.getTime())) {
+            return { year: d.getFullYear(), month: d.getMonth() + 1 };
+        }
+        return null;
+    }
+
+    const CATEGORY_MAP = {
+        '带屏云台': ['indoor'],
+        '室内云台': ['indoor'],
+        '双目云台': ['indoor', 'dual'],
+        '卡片机': ['indoor'],
+        '灯泡球机': ['outdoor'],
+        '多目球机': ['outdoor', 'dual'],
+        '球机': ['outdoor'],
+        '球机套装': ['outdoor'],
+        '三目球机': ['outdoor', 'dual'],
+        '双目球机': ['outdoor', 'dual'],
+        '双球机': ['outdoor'],
+        '电池多目球机': ['dual', 'battery'],
+        '电池双目球机': ['dual', 'battery'],
+        '电池双目小枪': ['dual', 'battery'],
+        '电池卡片机': ['battery'],
+        '电池球机': ['battery'],
+        '电池室外小枪': ['battery'],
+        '电池小枪': ['battery'],
+        '电池云台': ['battery'],
+        '门铃': ['doorbell'],
+        '猫眼': ['peephole']
+    };
+
+    function getCategoriesFromProductType(productType) {
+        const type = productType?.trim() || '';
+        return CATEGORY_MAP[type] || null;
+    }
+
+    function getEffectiveBrand(mainBrand, subBrand) {
+        let brand = mainBrand?.trim() || '';
+        if (brand === '其他') {
+            let sub = subBrand?.trim() || '';
+            if (sub && !/^(未处理|NA)$/i.test(sub)) {
+                brand = sub;
+            }
+        }
+        if (!brand || /^(未处理|NA)$/i.test(brand)) brand = '未知品牌';
+        return brand;
+    }
+
+    function getBrandColor(brand) {
+        if (!brand) return '#fefefe';
+        let hash = 0;
+        for (let i = 0; i < brand.length; i++) {
+            hash = ((hash << 5) - hash) + brand.charCodeAt(i);
+            hash |= 0;
+        }
+        const hue = Math.abs(hash % 360);
+        return `hsl(${hue}, 30%, 96%)`;
+    }
+
+    function isValidResolution(res) {
+        if (!res) return false;
+        const str = String(res).trim();
+        return !/^(未处理|NA)$/i.test(str);
+    }
+
+    let rawSkuList = [];
+    let allMonths = [];
+    let globalLatestMonth = null;
+    let modelStaticInfo = new Map();
+    let modelMonthlyData = new Map();
+
+    function precomputeData(skuList) {
+        const monthSet = new Set();
+        for (const sku of skuList) {
+            const ym = parseDateToYearMonth(sku.date);
+            if (ym) {
+                const monthKey = `${ym.year}-${ym.month.toString().padStart(2,'0')}`;
+                monthSet.add(monthKey);
+            }
+        }
+        allMonths = Array.from(monthSet).sort();
+        globalLatestMonth = allMonths.length ? allMonths[allMonths.length - 1] : null;
+
+        const modelMonthSales = new Map();
+        const modelSkuMap = new Map();
+
+        for (const sku of skuList) {
+            const ym = parseDateToYearMonth(sku.date);
+            if (!ym) continue;
+            const monthKey = `${ym.year}-${ym.month.toString().padStart(2,'0')}`;
+            const model = sku.model;
+            if (!modelMonthSales.has(model)) modelMonthSales.set(model, new Map());
+            const monthMap = modelMonthSales.get(model);
+            if (!monthMap.has(monthKey)) monthMap.set(monthKey, { totalSales: 0, skus: [] });
+            const monthData = monthMap.get(monthKey);
+            monthData.totalSales += sku.qty;
+            monthData.skus.push(sku);
+
+            if (!modelSkuMap.has(model)) modelSkuMap.set(model, new Map());
+            const skuMap = modelSkuMap.get(model);
+            const skuKey = `${sku.price}|${sku.img}|${sku.resolution}|${sku.brand}|${sku.link}`;
+            if (!skuMap.has(skuKey)) {
+                skuMap.set(skuKey, { price: sku.price, img: sku.img, resolution: sku.resolution, brand: sku.brand, link: sku.link, totalSales: 0 });
+            }
+            skuMap.get(skuKey).totalSales += sku.qty;
+        }
+
+        for (const [model, skuMap] of modelSkuMap.entries()) {
+            const monthData = modelMonthSales.get(model);
+            let bestSku = null;
+            
+            if (!monthData || !monthData.has(globalLatestMonth)) {
+                for (const skuInfo of skuMap.values()) {
+                    if (!bestSku || skuInfo.totalSales > bestSku.totalSales) bestSku = skuInfo;
+                }
+            } else {
+                const latestMonthSkus = monthData.get(globalLatestMonth).skus;
+                const skuTotalMap = new Map();
+                for (const sku of latestMonthSkus) {
+                    const key = `${sku.price}|${sku.img}|${sku.resolution}|${sku.brand}|${sku.link}`;
+                    skuTotalMap.set(key, (skuTotalMap.get(key) || 0) + sku.qty);
+                }
+                let bestKey = null, bestSales = 0;
+                for (const [key, sales] of skuTotalMap.entries()) {
+                    if (sales > bestSales) {
+                        bestSales = sales;
+                        bestKey = key;
+                    }
+                }
+                if (bestKey) {
+                    const [price, img, resolution, brand, link] = bestKey.split('|');
+                    bestSku = { price, img, resolution, brand, link };
+                }
+            }
+            
+            if (bestSku) {
+                const modelSkus = rawSkuList.filter(s => s.model === model);
+                const mainBrand = modelSkus.length > 0 ? modelSkus[0].mainBrand || '' : '';
+                modelStaticInfo.set(model, { 
+                    brand: bestSku.brand, 
+                    img: bestSku.img, 
+                    resolution: bestSku.resolution,
+                    mainBrand: mainBrand,
+                    link: bestSku.link
+                });
+            }
+        }
+
+        for (const [model, monthMap] of modelMonthSales.entries()) {
+            if (!modelMonthlyData.has(model)) modelMonthlyData.set(model, new Map());
+            const monthlyMap = modelMonthlyData.get(model);
+            for (const [month, data] of monthMap.entries()) {
+                let bestPrice = null;
+                let bestSales = 0;
+                for (const sku of data.skus) {
+                    if (sku.qty > bestSales) {
+                        bestSales = sku.qty;
+                        bestPrice = sku.price;
+                    }
+                }
+                monthlyMap.set(month, {
+                    totalSales: data.totalSales,
+                    price: bestPrice !== null ? bestPrice : (data.skus[0]?.price || 0)
+                });
+            }
+        }
+    }
+
+    function getAggregatedDataByMonth(month, selectedBrands) {
+        if (!month || !allMonths.includes(month)) return [];
+        const prevMonthIndex = allMonths.indexOf(month) - 1;
+        const prevMonth = prevMonthIndex >= 0 ? allMonths[prevMonthIndex] : null;
+
+        const result = [];
+        for (const [model, staticInfo] of modelStaticInfo.entries()) {
+            if (selectedBrands && selectedBrands.size > 0 && !selectedBrands.has(staticInfo.brand)) continue;
+
+            const monthlyMap = modelMonthlyData.get(model);
+            if (!monthlyMap) continue;
+
+            const currentData = monthlyMap.get(month);
+            if (!currentData) continue;
+            const currentSales = currentData.totalSales;
+            
+            const mainBrand = staticInfo.mainBrand || '';
+            const isOtherBrand = mainBrand === '其他' || mainBrand === '未处理' || !mainBrand;
+            const minSalesThreshold = isOtherBrand ? 1000 : 500;
+            
+            if (currentSales < minSalesThreshold) continue;
+
+            const prevData = prevMonth ? monthlyMap.get(prevMonth) : null;
+            const prevSales = prevData ? prevData.totalSales : 0;
+            const price = currentData.price;
+
+            let categories = null;
+            for (const sku of rawSkuList) {
+                if (sku.model === model && sku.categories) {
+                    categories = sku.categories;
+                    break;
+                }
+            }
+            if (!categories) continue;
+
+            result.push({
+                name: model,
+                brand: staticInfo.brand,
+                price: price,
+                img: staticInfo.img,
+                resolution: staticInfo.resolution,
+                categories: categories,
+                currentSales: currentSales,
+                prevSales: prevSales,
+                currentMonthLabel: month,
+                prevMonthLabel: prevMonth || '无上月',
+                link: staticInfo.link
+            });
+        }
+        return result;
+    }
+
+    const salesBuckets = [
+        { label: ">20000", min: 20001, max: Infinity },
+        { label: "10001~20000", min: 10001, max: 20000 },
+        { label: "5001~10000", min: 5001, max: 10000 },
+        { label: "3001~5000", min: 3001, max: 5000 },
+        { label: "1000~3000", min: 1000, max: 3000 },
+        { label: "500~1000", min: 500, max: 1000 }
+    ];
+    const priceBuckets = [
+        { label: ">¥350", min: 350.01, max: Infinity },
+        { label: "¥250~350", min: 250, max: 350 },
+        { label: "¥150~250", min: 150, max: 249.99 },
+        { label: "<¥150", min: 0, max: 149.99 }
+    ];
+
+    function getSalesCol(sales) {
+        for(let i=0; i<salesBuckets.length; i++) {
+            if(sales >= salesBuckets[i].min && sales <= salesBuckets[i].max) return i;
+        }
+        return -1;
+    }
+    function getPriceRow(price) {
+        for(let i=0; i<priceBuckets.length; i++) {
+            if(price >= priceBuckets[i].min && price <= priceBuckets[i].max) return i;
+        }
+        return -1;
+    }
+
+    function getTrendHtml(current, prev) {
+        if(prev === 0) return `<span class="trend-badge"><i class="fas fa-chart-line"></i> 新</span>`;
+        const change = ((current - prev) / prev * 100).toFixed(1);
+        const isUp = current >= prev;
+        const icon = isUp ? '<i class="fas fa-arrow-up"></i>' : '<i class="fas fa-arrow-down"></i>';
+        const trendClass = isUp ? 'trend-up' : 'trend-down';
+        const sign = isUp ? '+' : '';
+        return `<span class="trend-badge ${trendClass}">${icon} ${sign}${change}%</span>`;
+    }
+
+    function renderMatrix(productsList, containerId, currentMonthLabel, prevMonthLabel) {
+        const container = document.getElementById(containerId);
+        if(!container) return;
+        const rows = priceBuckets.length;
+        const cols = salesBuckets.length;
+        let matrix = Array(rows).fill().map(() => Array(cols).fill().map(() => []));
+        
+        for(let prod of productsList) {
+            const colIdx = getSalesCol(prod.currentSales);
+            const rowIdx = getPriceRow(prod.price);
+            if(colIdx !== -1 && rowIdx !== -1) {
+                matrix[rowIdx][colIdx].push(prod);
+            }
+        }
+        
+        for(let r=0; r<rows; r++) {
+            for(let c=0; c<cols; c++) {
+                matrix[r][c].sort((a,b) => b.price - a.price);
+            }
+        }
+        
+        let html = `<div class="matrix-grid">`;
+        for(let r=0; r<rows; r++) {
+            html += `<div class="price-label">${priceBuckets[r].label}</div>`;
+            for(let c=0; c<cols; c++) {
+                const cellProds = matrix[r][c];
+                html += `<div class="data-cell">`;
+                if(cellProds.length === 0) {
+                    html += `<div class="empty-cell">—</div>`;
+                } else {
+                    // 检查当前卡片大小模式
+                    const isCompactMode = document.getElementById('matrixWrapper').classList.contains('compact-mode');
+                    const isDetailMode = document.getElementById('matrixWrapper').classList.contains('detail-mode');
+                    
+                    html += `<div class="cell-products">`;
+                    
+                    for(let prod of cellProds) {
+                        const currSales = prod.currentSales.toLocaleString();
+                        const prevSales = prod.prevSales.toLocaleString();
+                        const shortName = prod.name.length > 20 ? prod.name.slice(0,18)+'...' : prod.name;
+                        const trendHtml = getTrendHtml(prod.currentSales, prod.prevSales);
+                        const brandColor = getBrandColor(prod.brand);
+                        const resolution = isValidResolution(prod.resolution) ? prod.resolution : null;
+                        const resolutionHtml = resolution ? `<span class="resolution-badge"><i class="fas fa-camera"></i> ${resolution}</span>` : '';
+                        const linkHtml = prod.link ? `<a href="${prod.link}" target="_blank" class="link-btn"><i class="fas fa-external-link-alt"></i> 查看</a>` : '';
+                        
+                        // 紧凑模式下显示简化信息
+                        const salesRowHtml = isCompactMode 
+                            ? `<span class="sales-item current"><i class="fas fa-fire"></i> ${currSales}</span>`
+                            : `<span class="sales-item current"><i class="fas fa-fire"></i> ${currentMonthLabel}: ${currSales}</span><span class="sales-item prev"><i class="fas fa-history"></i> ${prevMonthLabel}: ${prevSales}</span>`;
+                        
+                        const extraInfoHtml = isCompactMode 
+                            ? `<span class="price-badge"><i class="fas fa-tag"></i> ¥${prod.price.toFixed(0)}</span>`
+                            : `<span class="price-badge"><i class="fas fa-tag"></i> ¥${prod.price.toFixed(2)}</span>${resolutionHtml}${trendHtml}`;
+                        
+                        const compactClass = isCompactMode ? ' compact-card' : '';
+                        
+                        html += `
+                            <div class="product-card-mini${compactClass}" style="background-color: ${brandColor};">
+                                <div class="mini-img-wrap">
+                                    <div class="mini-img">
+                                        <img src="${prod.img}" alt="${prod.name}" loading="lazy" onerror="this.src='https://placehold.co/40x40?text=No+Image'">
+                                    </div>
+                                    <span class="brand-badge-img">${prod.brand}</span>
+                                    ${linkHtml}
+                                </div>
+                                <div class="mini-info">
+                                    <div class="mini-title" title="${prod.name}">${shortName}</div>
+                                    <div class="sales-row">
+                                        ${salesRowHtml}
+                                    </div>
+                                    <div>
+                                        ${extraInfoHtml}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                    html += `</div>`;
+                }
+                html += `</div>`;
+            }
+        }
+        html += `<div class="corner-bottom"></div>`;
+        for(let s of salesBuckets) {
+            html += `<div class="bottom-axis">${s.label}</div>`;
+        }
+        html += `</div>`;
+        container.innerHTML = html;
+    }
+
+    let currentSelectedMonth = '';
+    let currentSelectedBrands = new Set();
+    let currentTab = 'indoor';
+
+    function refreshMatrix() {
+        if (!currentSelectedMonth || !rawSkuList.length) return;
+        const aggregated = getAggregatedDataByMonth(currentSelectedMonth, currentSelectedBrands);
+        if (aggregated.length === 0) {
+            document.getElementById('matrixWrapper').innerHTML = '<div class="loading-placeholder">所选月份无符合条件的型号</div>';
+            return;
+        }
+        const currentMonthLabel = currentSelectedMonth;
+        const prevMonthIndex = allMonths.indexOf(currentSelectedMonth) - 1;
+        const prevMonthLabel = prevMonthIndex >= 0 ? allMonths[prevMonthIndex] : '无上月';
+        const categoryProducts = aggregated.filter(p => p.categories.includes(currentTab));
+        renderMatrix(categoryProducts, 'matrixWrapper', currentMonthLabel, prevMonthLabel);
+        
+        // 更新视图信息
+        document.getElementById('viewMonth').textContent = currentSelectedMonth;
+        document.getElementById('viewBrands').textContent = currentSelectedBrands.size;
+        document.getElementById('viewProducts').textContent = categoryProducts.length;
+    }
+
+    function switchTab(view) {
+        currentTab = view;
+        const btns = [
+            document.getElementById('tabIndoorBtn'),
+            document.getElementById('tabOutdoorBtn'),
+            document.getElementById('tabDualBtn'),
+            document.getElementById('tabBatteryBtn'),
+            document.getElementById('tabDoorbellBtn'),
+            document.getElementById('tabPeepholeBtn')
+        ];
+        btns.forEach(btn => { if(btn) btn.classList.remove('active'); });
+        if(view === 'indoor') document.getElementById('tabIndoorBtn').classList.add('active');
+        else if(view === 'outdoor') document.getElementById('tabOutdoorBtn').classList.add('active');
+        else if(view === 'dual') document.getElementById('tabDualBtn').classList.add('active');
+        else if(view === 'battery') document.getElementById('tabBatteryBtn').classList.add('active');
+        else if(view === 'doorbell') document.getElementById('tabDoorbellBtn').classList.add('active');
+        else if(view === 'peephole') document.getElementById('tabPeepholeBtn').classList.add('active');
+        refreshMatrix();
+    }
+
+    // 卡片大小切换功能
+    window.switchCardSize = function(size) {
+        const container = document.getElementById('matrixWrapper');
+        const buttons = document.querySelectorAll('#page1 .size-btn');
+        
+        // 移除所有模式类
+        container.classList.remove('compact-mode', 'detail-mode');
+        
+        // 添加新模式类
+        if (size === 'compact') {
+            container.classList.add('compact-mode');
+        } else if (size === 'detail') {
+            container.classList.add('detail-mode');
+        }
+        
+        // 更新按钮状态
+        buttons.forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.dataset.size === size) {
+                btn.classList.add('active');
+            }
+        });
+        
+        // 重新渲染矩阵
+        refreshMatrix();
+    };
+
+    function buildBrandFilter() {
+        const brandSet = new Set();
+        for (const [model, info] of modelStaticInfo.entries()) {
+            brandSet.add(info.brand);
+        }
+        const brands = Array.from(brandSet).sort();
+        const container = document.getElementById('brandCheckboxList');
+        container.innerHTML = '';
+        brands.forEach(brand => {
+            const label = document.createElement('label');
+            const cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.value = brand;
+            cb.checked = currentSelectedBrands.has(brand);
+            cb.addEventListener('change', (e) => {
+                if (e.target.checked) currentSelectedBrands.add(brand);
+                else currentSelectedBrands.delete(brand);
+                refreshMatrix();
+            });
+            label.appendChild(cb);
+            label.appendChild(document.createTextNode(` ${brand}`));
+            container.appendChild(label);
+        });
+        const searchInput = document.getElementById('brandSearchInput');
+        searchInput.addEventListener('input', () => {
+            const keyword = searchInput.value.toLowerCase();
+            const labels = container.querySelectorAll('label');
+            labels.forEach(label => {
+                const text = label.textContent.trim().toLowerCase();
+                if (text.includes(keyword)) label.style.display = '';
+                else label.style.display = 'none';
+            });
+        });
+        document.getElementById('selectAllBrands').onclick = () => {
+            currentSelectedBrands.clear();
+            brands.forEach(b => currentSelectedBrands.add(b));
+            const checkboxes = container.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(cb => cb.checked = true);
+            refreshMatrix();
+        };
+        document.getElementById('clearAllBrands').onclick = () => {
+            currentSelectedBrands.clear();
+            const checkboxes = container.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(cb => cb.checked = false);
+            refreshMatrix();
+        };
+    }
+
+    function initBrandPanel() {
+        const btn = document.getElementById('brandFilterBtn');
+        const panel = document.getElementById('brandPanel');
+        btn.addEventListener('click', () => {
+            panel.classList.toggle('show');
+        });
+        document.addEventListener('click', function(e) {
+            if (!btn.contains(e.target) && !panel.contains(e.target)) {
+                panel.classList.remove('show');
+            }
+        });
+    }
+
+    // 从URL参数恢复状态并加载数据
+    function init() {
+        const state = URLStateManager.parseState();
+        
+        // 调试信息
+        console.log('URL参数:', state);
+        console.log('localStorage键列表:', Object.keys(localStorage).filter(k => k.startsWith('sandbox_')));
+        
+        // 优先使用新版 dataId1，兼容旧版 dataId
+        const dataId = state.dataId1 || state.dataId;
+        
+        if (!dataId) {
+            // 如果没有dataId1，不显示错误，只是不加载数据
+            // 用户可能只分享了page2的数据
+            console.log('Page1 - 没有dataId1，跳过加载');
+            return;
+        }
+        
+        console.log('尝试加载数据ID:', dataId);
+        const savedData = DataStorage.loadData(dataId);
+        console.log('加载的数据:', savedData);
+        
+        if (!savedData || !savedData.skuList) {
+            // 数据不存在，但不显示错误（可能只分享了page2）
+            console.log('Page1 - 数据不存在');
+            return;
+        }
+        
+        // 隐藏加载中，显示页面
+        document.getElementById('loadingState').style.display = 'none';
+        document.getElementById('page1').style.display = state.page === 'page1' ? 'block' : 'none';
+        if (state.page === 'page1') {
+            document.getElementById('page1').classList.add('active');
+        }
+        
+        // 加载数据
+        rawSkuList = savedData.skuList;
+        precomputeData(rawSkuList);
+        
+        // 初始化月份选择器
+        const monthSelect = document.getElementById('monthSelector');
+        monthSelect.innerHTML = '<option value="">-- 选择月份 --</option>';
+        allMonths.forEach(m => {
+            const opt = document.createElement('option');
+            opt.value = m;
+            opt.textContent = m;
+            monthSelect.appendChild(opt);
+        });
+        
+        // 恢复月份选择
+        if (state.month && allMonths.includes(state.month)) {
+            currentSelectedMonth = state.month;
+            monthSelect.value = state.month;
+        } else if (allMonths.length) {
+            currentSelectedMonth = allMonths[allMonths.length - 1];
+            monthSelect.value = currentSelectedMonth;
+        }
+        
+        // 月份选择变化事件
+        monthSelect.addEventListener('change', () => {
+            currentSelectedMonth = monthSelect.value;
+            refreshMatrix();
+        });
+        
+        // 初始化品牌筛选
+        buildBrandFilter();
+        
+        // 恢复品牌选择
+        if (state.brands && state.brands.length > 0) {
+            currentSelectedBrands.clear();
+            state.brands.forEach(b => currentSelectedBrands.add(b));
+            const checkboxes = document.querySelectorAll('#brandCheckboxList input[type="checkbox"]');
+            checkboxes.forEach(cb => {
+                cb.checked = currentSelectedBrands.has(cb.value);
+            });
+        } else {
+            // 默认全选
+            const brands = Array.from(modelStaticInfo.values()).map(info => info.brand);
+            brands.forEach(b => currentSelectedBrands.add(b));
+        }
+        
+        // 恢复Tab选择
+        if (state.tab) {
+            currentTab = state.tab;
+        }
+        switchTab(currentTab);
+        
+        // 绑定Tab按钮事件
+        document.getElementById('tabIndoorBtn').addEventListener('click', () => switchTab('indoor'));
+        document.getElementById('tabOutdoorBtn').addEventListener('click', () => switchTab('outdoor'));
+        document.getElementById('tabDualBtn').addEventListener('click', () => switchTab('dual'));
+        document.getElementById('tabBatteryBtn').addEventListener('click', () => switchTab('battery'));
+        document.getElementById('tabDoorbellBtn').addEventListener('click', () => switchTab('doorbell'));
+        document.getElementById('tabPeepholeBtn').addEventListener('click', () => switchTab('peephole'));
+        
+        initBrandPanel();
+    }
+
+    function showError(message) {
+        document.getElementById('loadingState').style.display = 'none';
+        document.getElementById('errorState').style.display = 'block';
+        document.getElementById('errorMessage').textContent = message;
+    }
+
+    // 页面加载完成后初始化
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
+
+// ==================== 页面切换功能 ====================
+(function() {
+    function switchToPage(page) {
+        // 更新导航按钮状态
+        document.getElementById('navPage1Btn').classList.toggle('active', page === 'page1');
+        document.getElementById('navPage2Btn').classList.toggle('active', page === 'page2');
+        
+        // 显示/隐藏页面
+        document.getElementById('page1').style.display = page === 'page1' ? 'block' : 'none';
+        document.getElementById('page1').classList.toggle('active', page === 'page1');
+        document.getElementById('page2').style.display = page === 'page2' ? 'block' : 'none';
+        document.getElementById('page2').classList.toggle('active', page === 'page2');
+        
+        // 更新URL参数
+        const state = URLStateManager.parseState();
+        state.page = page;
+        const queryString = URLStateManager.serializeState(state);
+        const newUrl = window.location.pathname + (queryString ? '?' + queryString : '');
+        window.history.replaceState({}, '', newUrl);
+    }
+    
+    // 绑定导航按钮事件
+    document.getElementById('navPage1Btn').addEventListener('click', () => switchToPage('page1'));
+    document.getElementById('navPage2Btn').addEventListener('click', () => switchToPage('page2'));
+    
+    // 根据URL参数设置初始导航状态
+    function initNav() {
+        const state = URLStateManager.parseState();
+        document.getElementById('navPage1Btn').classList.toggle('active', state.page === 'page1');
+        document.getElementById('navPage2Btn').classList.toggle('active', state.page === 'page2');
+    }
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initNav);
+    } else {
+        initNav();
+    }
+})();
+
+// ==================== 页面2: 产品矩阵沙盘功能 ====================
+(function() {
+    const salesBuckets = [
+        { label: ">4000", min: 4001, max: Infinity },
+        { label: "2001~4000", min: 2001, max: 4000 },
+        { label: "1001~2000", min: 1001, max: 2000 },
+        { label: "501~1000", min: 501, max: 1000 },
+        { label: "201~500", min: 201, max: 500 },
+        { label: "≤200", min: 0, max: 200 }
+    ];
+    
+    const priceBuckets = [
+        { label: ">¥500", min: 500.01, max: Infinity },
+        { label: "¥350~500", min: 350, max: 500 },
+        { label: "¥200~350", min: 200, max: 349.99 },
+        { label: "≤¥200", min: 0, max: 199.99 }
+    ];
+
+    let currentData = [];
+    let currentRegion = '';
+    let allRegions = [];
+    let currentSelectedMonth2 = 'all'; // 当前选中的上架月份
+    let allMonths = []; // 所有可用的上架月份
+    let originalData = []; // 原始数据（未筛选）
+
+    function parseSales(salesStr) {
+        if (!salesStr) return 0;
+        const match = String(salesStr).match(/(\d+)/g);
+        if (match && match.length >= 2) {
+            return (parseInt(match[0]) + parseInt(match[1])) / 2;
+        }
+        return parseInt(salesStr) || 0;
+    }
+
+    // 获取所有上架月份（直接使用上架月份字段）
+    function extractMonths(data) {
+        const months = new Set();
+        data.forEach(item => {
+            const shelfMonth = item['上架月份'];
+            if (shelfMonth) {
+                months.add(shelfMonth);
+            }
+        });
+        return Array.from(months).sort().reverse(); // 降序排列，最新的在前
+    }
+
+    // 根据月份筛选数据
+    function filterDataByMonth(data, month) {
+        if (month === 'all') return data;
+        return data.filter(item => item['上架月份'] === month);
+    }
+
+    // 更新月份选择器
+    function updateMonthSelector() {
+        const selector = document.getElementById('monthSelector2');
+        if (!selector) return;
+        
+        // 保存当前选择
+        const currentValue = selector.value;
+        
+        // 清空并重新填充
+        selector.innerHTML = '<option value="all">全部</option>';
+        
+        allMonths.forEach(month => {
+            const option = document.createElement('option');
+            option.value = month;
+            option.textContent = month;
+            selector.appendChild(option);
+        });
+        
+        // 恢复选择或默认选择最近一个月
+        if (currentValue && allMonths.includes(currentValue)) {
+            selector.value = currentValue;
+        } else if (allMonths.length > 0) {
+            // 默认选择最近一个月
+            selector.value = allMonths[0];
+            currentSelectedMonth2 = allMonths[0];
+            const badge = document.getElementById('newProductBadge');
+            if (badge) badge.style.display = 'inline-block';
+        }
+    }
+
+    // 应用月份筛选
+    function applyMonthFilter() {
+        const selector = document.getElementById('monthSelector2');
+        if (!selector) return;
+        
+        currentSelectedMonth2 = selector.value;
+        
+        // 显示/隐藏"最近一个月"徽章
+        const badge = document.getElementById('newProductBadge');
+        if (badge) {
+            if (currentSelectedMonth2 !== 'all' && allMonths.length > 0 && currentSelectedMonth2 === allMonths[0]) {
+                badge.style.display = 'inline-block';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+        
+        // 筛选数据
+        currentData = filterDataByMonth(originalData, currentSelectedMonth2);
+        
+        // 重新渲染
+        const grouped = groupByRegion(currentData);
+        allRegions = Object.keys(grouped);
+        renderRegionTabs(allRegions);
+        if (allRegions.length > 0) {
+            currentRegion = allRegions[0];
+            renderMatrix();
+        }
+        
+        // 更新状态
+        const viewProducts2 = document.getElementById('viewProducts2');
+        if (viewProducts2) viewProducts2.textContent = currentData.length;
+    }
+
+    function extractFeatures(product) {
+        const features = [];
+        const model = (product['型号'] || '').toLowerCase();
+        const category = (product['产品大类'] || '').toLowerCase();
+        const resolution = product['分辨率'];
+        
+        if (category.includes('云台')) {
+            features.push('360°全景');
+            features.push('云台旋转');
+        }
+        if (category.includes('双目') || category.includes('双摄')) {
+            features.push('双摄像头');
+            features.push('广角监控');
+        }
+        if (category.includes('球机')) {
+            features.push('球形监控');
+        }
+        if (category.includes('室内')) features.push('室内监控');
+        if (category.includes('车载')) {
+            features.push('车载监控');
+            features.push('停车监控');
+        }
+        if (resolution) {
+            if (resolution.includes('16MP')) features.push('4K超清');
+            else if (resolution.includes('10MP') || resolution.includes('8MP')) features.push('高清画质');
+        }
+        if (model.includes('4g')) {
+            features.push('4G联网');
+            features.push('无需WiFi');
+        }
+        if (model.includes('wifi') || model.includes('双频')) features.push('双频WiFi');
+        if (model.includes('电池') || category.includes('电池')) features.push('无线续航');
+        
+        if (features.length < 3) {
+            features.push('手机远程');
+            features.push('移动侦测');
+        }
+        return features.slice(0, 4);
+    }
+
+    function getBrandColor(brand) {
+        if (!brand) return '#fefefe';
+        let hash = 0;
+        for (let i = 0; i < brand.length; i++) {
+            hash = ((hash << 5) - hash) + brand.charCodeAt(i);
+            hash |= 0;
+        }
+        const hue = Math.abs(hash % 360);
+        return `hsl(${hue}, 30%, 96%)`;
+    }
+
+    function getSalesCol(sales) {
+        for(let i=0; i<salesBuckets.length; i++) {
+            if(sales >= salesBuckets[i].min && sales <= salesBuckets[i].max) return i;
+        }
+        return salesBuckets.length - 1;
+    }
+    
+    function getPriceRow(price) {
+        for(let i=0; i<priceBuckets.length; i++) {
+            if(price >= priceBuckets[i].min && price <= priceBuckets[i].max) return i;
+        }
+        return priceBuckets.length - 1;
+    }
+
+    function groupByRegion(data) {
+        const groups = {};
+        data.forEach(item => {
+            const region = item['区域'] || '未分类';
+            if (!groups[region]) groups[region] = [];
+            groups[region].push(item);
+        });
+        return groups;
+    }
+
+    function renderRegionTabs(regions) {
+        const container = document.getElementById('regionTabs');
+        container.innerHTML = regions.map((region, idx) => `
+            <button class="region-tab ${idx === 0 ? 'active' : ''}" data-region="${region}">
+                <i class="fas fa-globe"></i> ${region}
+            </button>
+        `).join('');
+        
+        container.querySelectorAll('.region-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                container.querySelectorAll('.region-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                currentRegion = tab.dataset.region;
+                renderMatrix();
+                
+                // 更新视图信息
+                document.getElementById('viewRegion').textContent = currentRegion;
+                const grouped = groupByRegion(currentData);
+                const regionData = grouped[currentRegion] || [];
+                document.getElementById('viewProducts2').textContent = regionData.length;
+            });
+        });
+    }
+
+    function renderMatrix() {
+        const container = document.getElementById('matrixWrapper2');
+        const grouped = groupByRegion(currentData);
+        const regionData = grouped[currentRegion] || [];
+        
+        if (regionData.length === 0) {
+            container.innerHTML = '<div class="loading-placeholder">该区域暂无数据</div>';
+            return;
+        }
+
+        const rows = priceBuckets.length;
+        const cols = salesBuckets.length;
+        let matrix = Array(rows).fill().map(() => Array(cols).fill().map(() => []));
+        
+        for(let prod of regionData) {
+            const sales = parseSales(prod['销量']);
+            const price = parseFloat(prod['单价']) || 0;
+            const colIdx = getSalesCol(sales);
+            const rowIdx = getPriceRow(price);
+            if(colIdx !== -1 && rowIdx !== -1) {
+                matrix[rowIdx][colIdx].push(prod);
+            }
+        }
+        
+        for(let r=0; r<rows; r++) {
+            for(let c=0; c<cols; c++) {
+                matrix[r][c].sort((a,b) => parseFloat(b['单价']||0) - parseFloat(a['单价']||0));
+            }
+        }
+        
+        let html = `<div class="matrix-grid">`;
+        for(let r=0; r<rows; r++) {
+            html += `<div class="price-label">${priceBuckets[r].label}</div>`;
+            for(let c=0; c<cols; c++) {
+                const cellProds = matrix[r][c];
+                html += `<div class="data-cell">`;
+                if(cellProds.length === 0) {
+                    html += `<div class="empty-cell">—</div>`;
+                } else {
+                    for(let prod of cellProds) {
+                        const sales = prod['销量'] || '未知';
+                        const salesDate = prod['销量日期'] || '';
+                        const shelfDate = prod['上架时间'] || '';
+                        const price = parseFloat(prod['单价']||0).toFixed(0);
+                        const brand = prod['品牌'] || '未知';
+                        const model = prod['型号'] || '未知型号';
+                        const img = prod['图片链接'] || '';
+                        const resolution = prod['分辨率'];
+                        const features = extractFeatures(prod);
+                        const productLink = prod['商品链接'] || '';
+                        const brandColor = getBrandColor(brand);
+                        const linkHtml = productLink ? `<a href="${productLink}" target="_blank" class="link-btn"><i class="fas fa-external-link-alt"></i> 查看</a>` : '';
+                        
+                        html += `
+                            <div class="product-card-mini" style="background-color: ${brandColor};">
+                                <div class="mini-img-wrap">
+                                    <div class="mini-img">
+                                        <img src="${img}" alt="${model}" loading="lazy" onerror="this.src='https://placehold.co/40x40?text=No+Image'">
+                                    </div>
+                                    <span class="brand-badge-img" title="${brand}">${brand}</span>
+                                    ${linkHtml}
+                                </div>
+                                <div class="mini-info">
+                                    <div class="mini-title" title="${model}">${model}</div>
+                                    <div class="sales-row">
+                                        <span class="sales-item"><i class="fas fa-fire"></i> ${salesDate} 销量: ${sales}</span>
+                                    </div>
+                                    <div class="badge-row">
+                                        <span class="price-badge"><i class="fas fa-tag"></i> ¥${price}</span>
+                                        ${resolution ? `<span class="resolution-badge"><i class="fas fa-camera"></i> ${resolution}</span>` : ''}
+                                        ${shelfDate ? `<span class="shelf-badge"><i class="fas fa-upload"></i> 上架: ${shelfDate}</span>` : ''}
+                                    </div>
+                                    <div class="features-row">
+                                        ${features.map(f => `<span class="feature-badge">${f}</span>`).join('')}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                }
+                html += `</div>`;
+            }
+        }
+        html += `<div class="corner-bottom"><i class="fas fa-th"></i></div>`;
+        for(let s of salesBuckets) {
+            html += `<div class="bottom-axis">${s.label}</div>`;
+        }
+        html += `</div>`;
+        container.innerHTML = html;
+    }
+
+    // 从URL参数恢复状态并加载数据
+    function init() {
+        const state = URLStateManager.parseState();
+        
+        // 优先使用新版 dataId2，兼容旧版 dataId
+        const dataId = state.dataId2 || state.dataId;
+        
+        console.log('Page2 - 尝试加载数据ID:', dataId);
+        
+        if (!dataId) {
+            // 如果没有dataId2，不显示错误，只是不加载数据
+            // 用户可能只分享了page1的数据
+            console.log('Page2 - 没有dataId2，跳过加载');
+            return;
+        }
+        
+        const savedData = DataStorage.loadData(dataId);
+        console.log('Page2 - 加载的数据:', savedData);
+        
+        if (!savedData || !savedData.data) {
+            // 数据不存在，但不显示错误（可能只分享了page1）
+            console.log('Page2 - 数据不存在');
+            return;
+        }
+        
+        // 隐藏加载中，显示页面
+        document.getElementById('loadingState').style.display = 'none';
+        document.getElementById('page2').style.display = state.page === 'page2' ? 'block' : 'none';
+        if (state.page === 'page2') {
+            document.getElementById('page2').classList.add('active');
+        }
+        
+        // 保存原始数据
+        originalData = savedData.data;
+        
+        // 提取所有上架月份
+        allMonths = extractMonths(originalData);
+        console.log('Page2 - 提取的月份:', allMonths);
+        
+        // 更新月份选择器
+        updateMonthSelector();
+        
+        // 默认筛选最近一个月的新品
+        if (allMonths.length > 0) {
+            currentSelectedMonth2 = allMonths[0]; // 选择最近一个月
+            currentData = filterDataByMonth(originalData, currentSelectedMonth2);
+            const badge = document.getElementById('newProductBadge');
+            if (badge) badge.style.display = 'inline-block';
+        } else {
+            currentSelectedMonth2 = 'all';
+            currentData = originalData;
+        }
+        
+        const grouped = groupByRegion(currentData);
+        allRegions = Object.keys(grouped);
+        
+        if (allRegions.length > 0) {
+            // 恢复区域选择
+            if (state.region && allRegions.includes(state.region)) {
+                currentRegion = state.region;
+            } else {
+                currentRegion = allRegions[0];
+            }
+            
+            renderRegionTabs(allRegions);
+            
+            // 设置当前区域为active
+            document.querySelectorAll('.region-tab').forEach(tab => {
+                tab.classList.toggle('active', tab.dataset.region === currentRegion);
+            });
+            
+            renderMatrix();
+            
+            // 更新视图信息
+            document.getElementById('viewRegion').textContent = currentRegion;
+            document.getElementById('viewProducts2').textContent = currentData.length;
+        }
+        
+        // 绑定月份筛选按钮事件
+        const applyMonthBtn = document.getElementById('applyMonthBtn2');
+        if (applyMonthBtn) {
+            applyMonthBtn.addEventListener('click', applyMonthFilter);
+        }
+    }
+
+    function showError(message) {
+        document.getElementById('loadingState').style.display = 'none';
+        document.getElementById('errorState').style.display = 'block';
+        document.getElementById('errorMessage').textContent = message;
+    }
+
+    // 页面加载完成后初始化
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
+
+// ==================== 全局初始化检查 ====================
+(function() {
+    function checkInitialization() {
+        const state = URLStateManager.parseState();
+        
+        // 检查是否有数据ID（支持新版和旧版）
+        const hasDataId = state.dataId || state.dataId1 || state.dataId2;
+        
+        if (!hasDataId) {
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('errorState').style.display = 'block';
+            document.getElementById('errorMessage').textContent = '缺少数据ID，请使用有效的分享链接';
+            return;
+        }
+        
+        // 延迟检查，确保 page1 和 page2 的初始化都已完成
+        setTimeout(() => {
+            const page1Visible = document.getElementById('page1').style.display === 'block';
+            const page2Visible = document.getElementById('page2').style.display === 'block';
+            
+            // 如果两个页面都未显示，说明数据加载失败
+            if (!page1Visible && !page2Visible) {
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('errorState').style.display = 'block';
+                document.getElementById('errorMessage').textContent = '数据已过期或不存在，localStorage中的数据可能已被清除';
+            }
+        }, 500);
+    }
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', checkInitialization);
+    } else {
+        checkInitialization();
+    }
+})();
+
+// ==================== JSON 文件导入功能 ====================
+(function() {
+    function handleJsonFileImport(event) {
+        console.log('文件选择事件触发');
+        const file = event.target.files[0];
+        if (!file) {
+            console.log('未选择文件');
+            return;
+        }
+        
+        console.log('选择的文件:', file.name, '大小:', file.size, 'bytes');
+        
+        // 显示导入状态
+        const importStatus = document.getElementById('importStatus');
+        if (importStatus) {
+            importStatus.style.display = 'block';
+        }
+        
+        if (!file.name.endsWith('.json')) {
+            alert('请选择 JSON 文件');
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                console.log('文件读取成功，开始解析JSON...');
+                const jsonData = JSON.parse(e.target.result);
+                console.log('JSON解析成功:', Object.keys(jsonData));
+                
+                // 验证数据格式
+                if (!jsonData.page1 && !jsonData.page2) {
+                    alert('无效的 JSON 文件格式：缺少 page1 或 page2 数据');
+                    console.error('JSON数据格式错误:', jsonData);
+                    return;
+                }
+                
+                let hasData = false;
+                
+                // 生成唯一的时间戳基础
+                const baseTimestamp = Date.now();
+                
+                // 保存 page1 数据（使用压缩）
+                if (jsonData.page1 && jsonData.page1.skuList && jsonData.page1.skuList.length > 0) {
+                    const dataId1 = 'sb_' + baseTimestamp + '_p1';
+                    const result = DataStorage.saveData(dataId1, {
+                        skuList: jsonData.page1.skuList,
+                        timestamp: jsonData.page1.timestamp || baseTimestamp,
+                        type: 'page1'
+                    });
+                    
+                    if (result.success) {
+                        console.log('Page1数据已保存, dataId:', dataId1, 'SKU数量:', jsonData.page1.skuList.length, '原始大小:', result.originalSize, '是否压缩:', result.isCompressed);
+                        
+                        // 更新 URL，添加 dataId1
+                        const url = new URL(window.location.href);
+                        url.searchParams.set('dataId1', dataId1);
+                        window.history.replaceState({}, '', url);
+                        hasData = true;
+                    } else {
+                        console.error('保存Page1数据失败:', result.error);
+                        alert('保存Page1数据失败：' + result.error);
+                    }
+                } else {
+                    console.log('Page1数据为空或不存在');
+                }
+                
+                // 保存 page2 数据（使用压缩）
+                if (jsonData.page2 && jsonData.page2.data && jsonData.page2.data.length > 0) {
+                    const dataId2 = 'sb_' + (baseTimestamp + 1) + '_p2';
+                    const result = DataStorage.saveData(dataId2, {
+                        data: jsonData.page2.data,
+                        timestamp: jsonData.page2.timestamp || (baseTimestamp + 1),
+                        type: 'page2'
+                    });
+                    
+                    if (result.success) {
+                        console.log('Page2数据已保存, dataId:', dataId2, '数据条数:', jsonData.page2.data.length, '原始大小:', result.originalSize, '是否压缩:', result.isCompressed);
+                        
+                        // 更新 URL，添加 dataId2
+                        const url = new URL(window.location.href);
+                        url.searchParams.set('dataId2', dataId2);
+                        window.history.replaceState({}, '', url);
+                        hasData = true;
+                    } else {
+                        console.error('保存Page2数据失败:', result.error);
+                        alert('保存Page2数据失败：' + result.error);
+                    }
+                } else {
+                    console.log('Page2数据为空或不存在');
+                }
+                
+                if (!hasData) {
+                    alert('JSON文件中未找到有效数据');
+                    return;
+                }
+                
+                // 恢复筛选状态
+                if (jsonData.filterState) {
+                    console.log('恢复筛选状态:', jsonData.filterState);
+                    const url = new URL(window.location.href);
+                    if (jsonData.filterState.page) url.searchParams.set('page', jsonData.filterState.page);
+                    if (jsonData.filterState.month) url.searchParams.set('month', jsonData.filterState.month);
+                    if (jsonData.filterState.tab) url.searchParams.set('tab', jsonData.filterState.tab);
+                    if (jsonData.filterState.brands && jsonData.filterState.brands.length > 0) {
+                        url.searchParams.set('brands', jsonData.filterState.brands.join(','));
+                    }
+                    if (jsonData.filterState.region) url.searchParams.set('region', jsonData.filterState.region);
+                    window.history.replaceState({}, '', url);
+                }
+                
+                console.log('数据导入完成，准备刷新页面...');
+                // 刷新页面以加载数据
+                window.location.reload();
+                
+            } catch (error) {
+                console.error('解析 JSON 失败:', error);
+                alert('JSON 文件解析失败：' + error.message);
+                // 隐藏导入状态
+                const importStatus = document.getElementById('importStatus');
+                if (importStatus) {
+                    importStatus.style.display = 'none';
+                }
+            }
+        };
+        reader.onerror = function() {
+            alert('文件读取失败');
+            // 隐藏导入状态
+            const importStatus = document.getElementById('importStatus');
+            if (importStatus) {
+                importStatus.style.display = 'none';
+            }
+        };
+        reader.readAsText(file);
+    }
+    
+    // 绑定文件选择事件
+    function bindFileInputEvent() {
+        const fileInput = document.getElementById('jsonFileInput');
+        if (fileInput) {
+            fileInput.addEventListener('change', handleJsonFileImport);
+            console.log('JSON文件导入事件已绑定');
+        } else {
+            console.warn('未找到jsonFileInput元素');
+        }
+    }
+    
+    // 根据页面加载状态选择绑定方式
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', bindFileInputEvent);
+    } else {
+        bindFileInputEvent();
+    }
+})();
+</script>
+</body>
+</html>
